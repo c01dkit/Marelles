@@ -1,14 +1,12 @@
-package database;
+package model;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
-public class PlayerInfoTableManager extends TableManager {
+public class PlayerInfo extends TableManager {
     private final String TAG = "PlayerInfoTableManager: ";
     private final String TABLE_NAME = "player_info";
-    public PlayerInfoTableManager(){
+    public PlayerInfo(){
         connect();
         if (!connectState) System.out.println(TAG+"connect failed");
     }

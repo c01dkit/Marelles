@@ -1,18 +1,20 @@
-package view;
+package controller;
 
-import database.PlayerInfoTableManager;
+import model.PlayerInfo;
+import view.MainWindow;
+import view.MainWindowJFrame;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.SQLException;
 
-public class ButtonActionListener implements ActionListener {
+public class ButtonActionController implements ActionListener {
     private final MainWindow mainWindow;
-    private PlayerInfoTableManager playerInfoTableManager;
-    public ButtonActionListener(MainWindow window){
+    private PlayerInfo playerInfo;
+    public ButtonActionController(MainWindow window){
         mainWindow = window;
-        playerInfoTableManager = new PlayerInfoTableManager();
+        playerInfo = new PlayerInfo();
     }
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -49,7 +51,7 @@ public class ButtonActionListener implements ActionListener {
         if (name == null) return 0;
         int ans = 0;
         try {
-            ans = playerInfoTableManager.addNewPlayer(name);
+            ans = playerInfo.addNewPlayer(name);
             if (ans == 0)
                 JOptionPane.showMessageDialog(null,"添加玩家失败！");
         } catch (SQLException throwables) {
@@ -62,7 +64,7 @@ public class ButtonActionListener implements ActionListener {
         // 玩家信息
         JLabel[] jLabels;
         try {
-            String[] info = playerInfoTableManager.getAllPlayers();
+            String[] info = playerInfo.getAllPlayers();
             if (info!=null){
                 int size = info.length;
                 jLabels = new JLabel[size];

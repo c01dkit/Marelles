@@ -1,4 +1,4 @@
-import database.DatabaseManager;
+import model.DatabaseManager;
 import view.MainWindow;
 
 public class MarellesClient {

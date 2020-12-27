@@ -1,6 +1,7 @@
 package view;
 
-import database.DatabaseManager;
+import controller.ButtonActionController;
+import model.DatabaseManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,11 +41,11 @@ public class MainWindow extends MainWindowJFrame {
         this.setLayout(null);
 
         mainButtonSet = new JButton[4];
-        ButtonActionListener buttonActionListener = new ButtonActionListener(this);
+        ButtonActionController buttonActionController = new ButtonActionController(this);
         for (int i = 0; i < mainButtonSet.length; i++){
             mainButtonSet[i] = new JButton();
             mainButtonSet[i].setText(mainButtonHint[i]);
-            mainButtonSet[i].addActionListener(buttonActionListener);
+            mainButtonSet[i].addActionListener(buttonActionController);
             mainButtonSet[i].setBounds((gameWidth-mainButtonWidth)/2,
                     gameHeight*4/7+i*(mainButtonHeight+mainButtonPadding),
                     mainButtonWidth,mainButtonHeight);
@@ -55,6 +56,7 @@ public class MainWindow extends MainWindowJFrame {
                 gameHeight/13, 2*mainButtonWidth+mainButtonPadding);
         playBoard.setVisible(false);
         this.add(playBoard);
+        this.add(new Chess(1));
         this.setVisible(true);
     }
 
