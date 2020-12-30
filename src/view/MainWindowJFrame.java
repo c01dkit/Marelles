@@ -9,8 +9,11 @@ public class MainWindowJFrame extends JFrame {
     public static final int ERROR_BEYOND_BOARD = 0;
     public static final int ERROR_OVERLAP = 1;
     public static final int ERROR_TOO_FAR = 2;
+    public static final int ERROR_EMPTY_CHESS = 3;
+    public static final int ERROR_SELF_CHESS = 4;
     public static final int STATE_OK = 200;
     public static final int STATE_UNKOWN = 404;
+    public static final int CRITICAL_PHASE1 = 9; // 九子棋双方各放9子进入第二阶段
     public static final String backgourd = "src/res/drawable/background.png";
     public static final String board = "src/res/drawable/board.png";
     public static final String bchess = "src/res/drawable/blackchess.png";
@@ -21,8 +24,9 @@ public class MainWindowJFrame extends JFrame {
     public static final String wchessShadow = "src/res/drawable/whitechess_shadow.png";
     public static final String undo = "悔 棋";
     public static final String endGame = "结 束 游 戏";
+    public static final String[] gameState = {"bwin","wwin","draw","unfinished"};
     public static final String[] mainButtonHint = {"单 人 游 戏","双 人 对 战","游 戏 帮 助","退 出 游 戏"};
-    public static final String[] singleGameButtonHint = {"新 的 游 戏","复 盘 战 局","玩 家 信 息","返 回 主 页"};
+    public static final String[] singleGameButtonHint = {"新 的 游 戏","继 续 游 戏","玩 家 信 息","返 回 主 页"};
     public static final String[] multiGameButtonHint = {"创 建 房 间","加 入 房 间","玩 家 信 息","返 回 主 页"};
     public static final String gameRule = "<html>游戏共分为三个阶段：<br>" +
             "<br>" +
@@ -77,7 +81,6 @@ public class MainWindowJFrame extends JFrame {
             {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1}, //22 -> 19,21,23
             {0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0}, //23 -> 14,22
     }; //做这个表也太累了
-
     protected Toolkit toolkit;
     protected int gameWidth;
     protected int gameHeight;
@@ -88,5 +91,7 @@ public class MainWindowJFrame extends JFrame {
     protected  Font mainMessageFont;
     protected JButton[] mainButtonSet;
     protected PlayBoard playBoard;
+    protected StatusPanel statusPanel;
+    protected GameProcess gameProcess;
     protected DatabaseManager databaseManager;
 }

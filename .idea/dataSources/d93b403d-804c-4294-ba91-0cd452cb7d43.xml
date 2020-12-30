@@ -166,44 +166,35 @@
     <column id="41" parent="10" name="seq">
       <Position>2</Position>
     </column>
-    <column id="42" parent="11" name="id">
+    <column id="42" parent="11" name="game_id">
       <Position>1</Position>
-      <DataType>integer|0s</DataType>
-      <SequenceIdentity>null</SequenceIdentity>
+      <DataType>int|0s</DataType>
+      <NotNull>1</NotNull>
     </column>
-    <column id="43" parent="11" name="game_id">
+    <column id="43" parent="11" name="turn">
       <Position>2</Position>
       <DataType>int|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <column id="44" parent="11" name="turn">
+    <column id="44" parent="11" name="player">
       <Position>3</Position>
+      <DataType>char(1)|0s</DataType>
+      <NotNull>1</NotNull>
+    </column>
+    <column id="45" parent="11" name="pos_before">
+      <Position>4</Position>
       <DataType>int|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <column id="45" parent="11" name="player">
-      <Position>4</Position>
-      <DataType>char(4)|0s</DataType>
-      <NotNull>1</NotNull>
-    </column>
-    <column id="46" parent="11" name="pos_before">
+    <column id="46" parent="11" name="pos_after">
       <Position>5</Position>
       <DataType>int|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <column id="47" parent="11" name="pos_after">
+    <column id="47" parent="11" name="pos_affect">
       <Position>6</Position>
       <DataType>int|0s</DataType>
       <NotNull>1</NotNull>
     </column>
-    <column id="48" parent="11" name="pos_affect">
-      <Position>7</Position>
-      <DataType>int|0s</DataType>
-      <NotNull>1</NotNull>
-    </column>
-    <key id="49" parent="11">
-      <ColNames>id</ColNames>
-      <Primary>1</Primary>
-    </key>
   </database-model>
 </dataSource>

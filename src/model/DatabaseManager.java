@@ -3,7 +3,7 @@ package model;
 import java.sql.*;
 
 public class DatabaseManager {
-    Connection connection;
+    private static Connection connection = null;
     Statement statement;
     ResultSet resultSet;
     private final String TAG = "DatabaseManger: ";
@@ -18,11 +18,24 @@ public class DatabaseManager {
             initChatTable();
             initPlayerInfoTable();
             statement.close();
-            connection.close();
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
         }
     }
+
+    public static Connection getConnection() {
+        if (DatabaseManager.connection == null){
+            try {
+                Class.forName("org.sqlite.JDBC");
+                DatabaseManager.connection =
+                        DriverManager.getConnection("jdbc:sqlite:marelles.db");
+            } catch (SQLException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        return DatabaseManager.connection;
+    }
+
     private void initGameStateTable() throws SQLException {
         if (checkTable("game_state")){
             System.out.println(TAG+"game_state table already exists");
@@ -43,10 +56,9 @@ public class DatabaseManager {
             System.out.println(TAG+"step_state table already exists");
         } else {
             String createTableSql = "create table step_state(" +
-                    "id integer primary key autoincrement," +
                     "game_id int not null," +
                     "turn int not null," +
-                    "player char(4) not null," +
+                    "player char(1) not null," +
                     "pos_before int not null," +
                     "pos_after int not null," +
                     "pos_affect int not null)";

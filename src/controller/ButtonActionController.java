@@ -1,5 +1,6 @@
 package controller;
 
+import model.GameState;
 import model.PlayerInfo;
 import view.MainWindow;
 import view.MainWindowJFrame;
@@ -11,7 +12,7 @@ import java.sql.SQLException;
 
 public class ButtonActionController implements ActionListener {
     private final MainWindow mainWindow;
-    private PlayerInfo playerInfo;
+    private final PlayerInfo playerInfo;
     public ButtonActionController(MainWindow window){
         mainWindow = window;
         playerInfo = new PlayerInfo();
@@ -28,15 +29,15 @@ public class ButtonActionController implements ActionListener {
         } else if (text.equals(MainWindowJFrame.mainButtonHint[3])) {
             System.exit(0);
         } else if (text.equals(MainWindowJFrame.singleGameButtonHint[0])){
-            //TODO: 单人游戏
-            int playerID = setUpPlayer();
-            if (playerID > 0){
-                mainWindow.setToSingleGameView();
+            String playerName = setUpPlayer();
+            if (playerName != null){
+                mainWindow.setToSingleGameView(playerName);
             }
-        } else if (text.equals(MainWindowJFrame.endGame)){
+        } else if (text.equals(MainWindowJFrame.endGame)){ //从游戏中退出，保存游戏
+            mainWindow.saveGame();
             mainWindow.setToGameWelcomeView("single");
-        } else if (text.equals(MainWindowJFrame.singleGameButtonHint[1])){
-            //TODO:复盘战局
+        } else if (text.equals(MainWindowJFrame.singleGameButtonHint[1])){ //单人游戏，继续游戏
+            mainWindow.loadSingleGameView();
         } else if (text.equals(MainWindowJFrame.singleGameButtonHint[2])){
             dispalyPlayerInfo();
         } else if (text.equals(MainWindowJFrame.singleGameButtonHint[3])){
@@ -44,15 +45,15 @@ public class ButtonActionController implements ActionListener {
         }
 
     }
-    private int setUpPlayer(){
+    private String setUpPlayer(){
         String name = JOptionPane.showInputDialog(null,
                 "<html>请输入玩家昵称<br>游戏确保玩家名称唯一，不存在则新建</html>",
                 "设置昵称",JOptionPane.PLAIN_MESSAGE);
-        if (name == null) return 0;
-        int ans = 0;
+        if (name == null) return null;
+        String ans = null;
         try {
             ans = playerInfo.addNewPlayer(name);
-            if (ans == 0)
+            if (ans == null)
                 JOptionPane.showMessageDialog(null,"添加玩家失败！");
         } catch (SQLException throwables) {
             throwables.printStackTrace();

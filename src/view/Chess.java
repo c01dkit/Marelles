@@ -5,11 +5,9 @@ import javax.swing.*;
 public class Chess extends JLabel {
     public static final int NONE = 0;
     public static final int BLACK = 1;
-    public static final int BLACK_SHADOW = 2;
+    public static final int WHITE = 2;
     public static final int BLACK_SELECTED = 3;
-    public static final int WHITE = 4;
-    public static final int WHITE_SHADOW = 5;
-    public static final int WHITE_SELECTED = 6;
+    public static final int WHITE_SELECTED = 5;
     private static ImageIcon blackChess;
     private static ImageIcon blackChessShadow;
     private static ImageIcon blackChessSelected;
@@ -35,18 +33,18 @@ public class Chess extends JLabel {
 
     public void setColor(int color) {
         this.color = color;
-        if (color == NONE){
+        if (color == Chess.NONE){
             this.setVisible(false);
-        } else if (color == BLACK){
+        } else if (color == Chess.BLACK){
             this.setVisible(true);
             this.setIcon(blackChess);
-        } else if (color == WHITE){
+        } else if (color == Chess.WHITE){
             this.setVisible(true);
             this.setIcon(whiteChess);
-        } else if (color == BLACK_SELECTED){
+        } else if (color == Chess.BLACK_SELECTED){
             this.setVisible(true);
             this.setIcon(blackChessSelected);
-        } else if (color == WHITE_SELECTED){
+        } else if (color == Chess.WHITE_SELECTED){
             this.setVisible(true);
             this.setIcon(whiteChessSelected);
         }

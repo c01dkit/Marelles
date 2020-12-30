@@ -3,24 +3,21 @@ package model;
 import java.sql.*;
 
 public class TableManager {
-    Connection connection;
-    Statement statement;
-    PreparedStatement preparedStatement;
-    ResultSet resultSet;
-    boolean connectState = false;
+    protected Connection connection = null;
+    protected Statement statement = null;
+    protected ResultSet resultSet = null;
+    protected PreparedStatement preparedStatement = null;
     protected void connect(){
+        connection = DatabaseManager.getConnection();
+    }
+    protected void selectAll(String tableName){
         try {
-            Class.forName("org.sqlite.JDBC");
-            connection = DriverManager.getConnection("jdbc:sqlite:marelles.db");
             statement = connection.createStatement();
-            connectState = true;
-        } catch (ClassNotFoundException | SQLException e) {
-            e.printStackTrace();
+            String select = "select * from "+tableName;
+            resultSet = statement.executeQuery(select);
+            statement.close();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
         }
     }
-    protected void selecetAll(String tableName) throws SQLException {
-        String queryAll = "select * from " + tableName;
-        resultSet = statement.executeQuery(queryAll);
-    }
-
 }

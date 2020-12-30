@@ -3,37 +3,35 @@ package model;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
-public class PlayerInfo extends TableManager {
+public class PlayerInfo extends TableManager{
     private final String TAG = "PlayerInfoTableManager: ";
     private final String TABLE_NAME = "player_info";
     public PlayerInfo(){
         connect();
-        if (!connectState) System.out.println(TAG+"connect failed");
+        if (connection == null) System.out.println(TAG+"connect failed");
     }
-    public int addNewPlayer(String name) throws SQLException {
+    public String addNewPlayer(String name) throws SQLException {
         name = name.trim();
-        if (!connectState || name.isEmpty()) return 0;
-        int size = 0;
+        if (connection == null || name.isEmpty()) return null;
         String search = "select id,name from "+TABLE_NAME;
         preparedStatement = connection.prepareStatement(search);
         resultSet = preparedStatement.executeQuery();
         while (resultSet.next()){
-            size++;
             if (resultSet.getString(2).equals(name))
-                return size;
+                return name;
         }
         String insert = "insert into "+TABLE_NAME+" (name) values (?)";
         preparedStatement = connection.prepareStatement(insert);
         preparedStatement.setString(1,name);
         preparedStatement.executeUpdate();
-        return size+1;
+        return name;
     }
     public String[] getAllPlayers() throws SQLException {
-        if (!connectState) {
+        if (connection!= null) {
             System.out.println(TAG+"getAllPlayers failed: not connected");
             return null;
         }
-        selecetAll(TABLE_NAME);
+        selectAll(TABLE_NAME);
         ArrayList<String> ans = new ArrayList<>();
         String[] res = null;
         ans.add("昵称          先手胜 先手平 先手负 后手胜 后手平 后手负 悔棋 逃跑");
