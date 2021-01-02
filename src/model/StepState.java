@@ -1,10 +1,9 @@
 package model;
 
 import view.Chess;
-import view.MainWindowJFrame;
+import view.ConstantDataSet;
 
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.Vector;
 
 public class StepState extends TableManager{
@@ -21,9 +20,16 @@ public class StepState extends TableManager{
         connect();
         phase = PHASE1;
         if (connection==null) System.out.println(TAG+"connect failed");
-        recordDataVector = new Vector<>();
+        recordDataVector = getNewRecordDataVector();
     }
 
+    public int getGameID() {
+        return gameID;
+    }
+
+    public Vector<RecordData> getRecordDataVector() {
+        return recordDataVector;
+    }
 
     public void bindGameID(int gameID){
         this.gameID = gameID;
@@ -31,7 +37,7 @@ public class StepState extends TableManager{
 
     public int localClick(int x, int y){
         int index = 0;
-        for (int[] ints : MainWindowJFrame.chessPostionMap) {
+        for (int[] ints : ConstantDataSet.chessPostionMap) {
             if (ints[0] == x && ints[1] == y) break;
             index++;
         }
@@ -48,9 +54,10 @@ public class StepState extends TableManager{
 
     public void addStep(int from, int to, int affect, int color){
         int turn = recordDataVector.size();
-        String c;
+        String c = "?";
         if (color == Chess.BLACK) c = "b";
-        else c = "w";
+        if (color == Chess.WHITE) c = "w";
+
         recordDataVector.add(new RecordData(gameID,turn+1,c,from,to,affect));
     }
 
@@ -90,9 +97,9 @@ public class StepState extends TableManager{
             e.printStackTrace();
         }
     }
-    private Vector<RecordData> getRecordDataVector(){
+    private Vector<RecordData> getNewRecordDataVector(){
         if (gameID == 0) {
-            recordDataVector.clear();
+            recordDataVector = new Vector<>();
             gameID = GameState.getNewGameID();
         }
         else {
@@ -110,6 +117,7 @@ public class StepState extends TableManager{
                             resultSet.getInt(6)); // pos_affect
                     recordDataVector.add(recordData);
                 }
+                resultSet.close();
                 statement.close();
             } catch (SQLException e){
                 e.printStackTrace();
@@ -121,7 +129,7 @@ public class StepState extends TableManager{
     public Vector<RecordData> load(){
         int gameID = GameState.getLastUnfinishedGameID();
         bindGameID(gameID);
-        return getRecordDataVector();
+        return getNewRecordDataVector();
     }
 
 }

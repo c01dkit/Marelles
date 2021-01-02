@@ -4,7 +4,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class PlayerInfo extends TableManager{
-    private final String TAG = "PlayerInfoTableManager: ";
+    private final String TAG = "PlayerInfo: ";
     private final String TABLE_NAME = "player_info";
     public PlayerInfo(){
         connect();
@@ -13,25 +13,31 @@ public class PlayerInfo extends TableManager{
     public String addNewPlayer(String name) throws SQLException {
         name = name.trim();
         if (connection == null || name.isEmpty()) return null;
-        String search = "select id,name from "+TABLE_NAME;
+        String search = "select name from "+TABLE_NAME;
         preparedStatement = connection.prepareStatement(search);
         resultSet = preparedStatement.executeQuery();
+        int id = 1;
         while (resultSet.next()){
-            if (resultSet.getString(2).equals(name))
+            id++;
+            if (resultSet.getString(1).equals(name))
                 return name;
         }
-        String insert = "insert into "+TABLE_NAME+" (name) values (?)";
+        String insert = "insert into "+TABLE_NAME+" (id,name) values (?,?)";
         preparedStatement = connection.prepareStatement(insert);
-        preparedStatement.setString(1,name);
+        preparedStatement.setInt(1,id);
+        preparedStatement.setString(2,name);
         preparedStatement.executeUpdate();
         return name;
     }
     public String[] getAllPlayers() throws SQLException {
-        if (connection!= null) {
+        if (connection== null) {
             System.out.println(TAG+"getAllPlayers failed: not connected");
             return null;
         }
-        selectAll(TABLE_NAME);
+
+        statement = connection.createStatement();
+        String selectSQL = "select * from "+TABLE_NAME;
+        resultSet = statement.executeQuery(selectSQL);
         ArrayList<String> ans = new ArrayList<>();
         String[] res = null;
         ans.add("昵称          先手胜 先手平 先手负 后手胜 后手平 后手负 悔棋 逃跑");

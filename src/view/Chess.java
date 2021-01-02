@@ -19,12 +19,12 @@ public class Chess extends JLabel {
         setColor(color);
     }
     public static void loadChessIcon(){
-        blackChess = new ImageIcon(MainWindowJFrame.bchess);
-        blackChessSelected = new ImageIcon(MainWindowJFrame.bchessSelected);
-        blackChessShadow = new ImageIcon(MainWindowJFrame.bchessShadow);
-        whiteChess = new ImageIcon(MainWindowJFrame.wchess);
-        whiteChessSelected = new ImageIcon(MainWindowJFrame.wchessSelected);
-        whiteChessShadow = new ImageIcon(MainWindowJFrame.wchessShadow);
+        blackChess = new ImageIcon(ConstantDataSet.bchess);
+        blackChessSelected = new ImageIcon(ConstantDataSet.bchessSelected);
+        blackChessShadow = new ImageIcon(ConstantDataSet.bchessShadow);
+        whiteChess = new ImageIcon(ConstantDataSet.wchess);
+        whiteChessSelected = new ImageIcon(ConstantDataSet.wchessSelected);
+        whiteChessShadow = new ImageIcon(ConstantDataSet.wchessShadow);
     }
 
     public int getColor() {

@@ -1,9 +1,8 @@
 package controller;
 
-import model.GameState;
 import model.PlayerInfo;
 import view.MainWindow;
-import view.MainWindowJFrame;
+import view.ConstantDataSet;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -20,27 +19,28 @@ public class ButtonActionController implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         String text = e.getActionCommand();
-        if (text.equals(MainWindowJFrame.mainButtonHint[0])) {
+        if (text.equals(ConstantDataSet.mainButtonHint[0])) {
             mainWindow.setToGameWelcomeView("single");
-        } else if (text.equals(MainWindowJFrame.mainButtonHint[1])){
+        } else if (text.equals(ConstantDataSet.mainButtonHint[1])){
             mainWindow.setToGameWelcomeView("multi");
-        } else if (text.equals(MainWindowJFrame.mainButtonHint[2])){
+        } else if (text.equals(ConstantDataSet.mainButtonHint[2])){
             mainWindow.showRules();
-        } else if (text.equals(MainWindowJFrame.mainButtonHint[3])) {
+        } else if (text.equals(ConstantDataSet.mainButtonHint[3])) {
             System.exit(0);
-        } else if (text.equals(MainWindowJFrame.singleGameButtonHint[0])){
+        } else if (text.equals(ConstantDataSet.singleGameButtonHint[0])){
+            // 设定玩家昵称，新建一个游戏
             String playerName = setUpPlayer();
             if (playerName != null){
                 mainWindow.setToSingleGameView(playerName);
             }
-        } else if (text.equals(MainWindowJFrame.endGame)){ //从游戏中退出，保存游戏
+        } else if (text.equals(ConstantDataSet.endGame)){ //从游戏中退出，保存游戏
             mainWindow.saveGame();
             mainWindow.setToGameWelcomeView("single");
-        } else if (text.equals(MainWindowJFrame.singleGameButtonHint[1])){ //单人游戏，继续游戏
+        } else if (text.equals(ConstantDataSet.singleGameButtonHint[1])){ //单人游戏，继续游戏
             mainWindow.loadSingleGameView();
-        } else if (text.equals(MainWindowJFrame.singleGameButtonHint[2])){
+        } else if (text.equals(ConstantDataSet.singleGameButtonHint[2])){
             dispalyPlayerInfo();
-        } else if (text.equals(MainWindowJFrame.singleGameButtonHint[3])){
+        } else if (text.equals(ConstantDataSet.singleGameButtonHint[3])){
             mainWindow.setToWelcomeView();
         }
 

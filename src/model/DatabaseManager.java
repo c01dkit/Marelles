@@ -3,14 +3,20 @@ package model;
 import java.sql.*;
 
 public class DatabaseManager {
+    private static final String JDBC_PORT = "3306";
+    private static final String JDBC_DATABASE = "marelles";
+    private static final String JDBC_USER = "root";
+    private static final String JDBC_PASSWORD = "";
+    private static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
     private static Connection connection = null;
     Statement statement;
     ResultSet resultSet;
     private final String TAG = "DatabaseManger: ";
     public void init(){
+        String JDBC_URL = "jdbc:mysql://localhost:" + JDBC_PORT + "/" + JDBC_DATABASE + "?useSSL=false&characterEncoding=utf8";
         try {
-            Class.forName("org.sqlite.JDBC");
-            connection = DriverManager.getConnection("jdbc:sqlite:marelles.db");
+            Class.forName(JDBC_DRIVER);
+            connection = DriverManager.getConnection(JDBC_URL,JDBC_USER,JDBC_PASSWORD);
             System.out.println(TAG+"Connected Successfully.");
             statement = connection.createStatement();
             initGameStateTable();
@@ -24,11 +30,12 @@ public class DatabaseManager {
     }
 
     public static Connection getConnection() {
+        String JDBC_URL = "jdbc:mysql://localhost:" + JDBC_PORT + "/" + JDBC_DATABASE + "?useSSL=false&characterEncoding=utf8";
         if (DatabaseManager.connection == null){
             try {
-                Class.forName("org.sqlite.JDBC");
+                Class.forName(JDBC_DRIVER);
                 DatabaseManager.connection =
-                        DriverManager.getConnection("jdbc:sqlite:marelles.db");
+                        DriverManager.getConnection(JDBC_URL,JDBC_USER,JDBC_PASSWORD);
             } catch (SQLException | ClassNotFoundException e) {
                 e.printStackTrace();
             }
@@ -41,7 +48,7 @@ public class DatabaseManager {
             System.out.println(TAG+"game_state table already exists");
         } else {
             String createTableSql = "create table game_state(" +
-                    "id integer primary key autoincrement," +
+                    "id int not null," +
                     "bname char(64) not null," +
                     "wname char(64) not null," +
                     "turns int not null," +
@@ -72,7 +79,7 @@ public class DatabaseManager {
             System.out.println(TAG+"chat table already exists");
         } else {
             String createTableSql = "create table chat(" +
-                    "id integer primary key autoincrement," +
+                    "id int not null," +
                     "game_id int not null," +
                     "turn int not null," +
                     "player char(4) not null," +
@@ -87,7 +94,7 @@ public class DatabaseManager {
             System.out.println(TAG+"player_info table already exists");
         } else {
             String createTableSql = "create table player_info(" +
-                    "id integer primary key autoincrement," +
+                    "id int not null," +
                     "name char(64) not null," +
                     "ini_win int not null default 0," +
                     "ini_tie int not null default 0," +
@@ -95,7 +102,7 @@ public class DatabaseManager {
                     "gote_win int not null default 0," +
                     "gote_tie int not null default 0," +
                     "gote_lose int not null default 0," +
-                    "undo int not null default 0," +
+                    "undo_times int not null default 0," +
                     "run_away int not null default 0)";
             statement.executeUpdate(createTableSql);
             System.out.println(TAG+"create table : player_info");
@@ -103,7 +110,7 @@ public class DatabaseManager {
     }
 
     private boolean checkTable(String tableName) throws SQLException {
-        String checkTableExistsSql = "select name from sqlite_master where type='table'";
+        String checkTableExistsSql = "select TABLE_NAME from information_schema.TABLES WHERE TABLE_SCHEMA ="+"'"+JDBC_DATABASE+"'";
         resultSet = statement.executeQuery(checkTableExistsSql);
         while (resultSet.next()){
             String tableFound = resultSet.getString(1);

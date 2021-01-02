@@ -7,6 +7,5 @@ public class MarellesClient {
         DatabaseManager databaseManager = new DatabaseManager();
         mainWindow.init();
         databaseManager.init();
-        mainWindow.bind(databaseManager);
     }
 }

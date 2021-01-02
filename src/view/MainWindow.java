@@ -2,23 +2,33 @@ package view;
 
 import controller.ButtonActionController;
 import model.DatabaseManager;
+import model.GameState;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class MainWindow extends MainWindowJFrame {
+public class MainWindow extends JFrame {
+    private final int gameWidth;
+    private final int gameHeight;
+    private final int mainButtonWidth;
+    private final int mainButtonHeight;
+    private final int mainButtonPadding;
+    private JButton[] mainButtonSet;
+    private PlayBoard playBoard;
+    private StatusPanel statusPanel;
+    private GameProcess gameProcess;
 
     public MainWindow(){
-        toolkit = Toolkit.getDefaultToolkit();
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
         gameWidth = toolkit.getScreenSize().width*7/10;
         gameHeight = toolkit.getScreenSize().height*4/5;
         mainButtonWidth = gameWidth*5/21;
         mainButtonHeight = gameHeight/15;
         mainButtonPadding = 30;
-        mainButtonFont = new Font("楷体",Font.PLAIN,24);
-        mainMessageFont = new Font("楷体",Font.PLAIN,24);
-        UIManager.put("Button.font",mainButtonFont);
-        UIManager.put("Label.font",mainMessageFont);
+        Font mainButtonFont = new Font("楷体", Font.PLAIN, 24);
+        Font mainMessageFont = new Font("楷体", Font.PLAIN, 24);
+        UIManager.put("Button.font", mainButtonFont);
+        UIManager.put("Label.font", mainMessageFont);
     }
     public void init(){
         this.setSize(gameWidth, gameHeight); // 设置初始化窗口大小
@@ -27,7 +37,7 @@ public class MainWindow extends MainWindowJFrame {
         this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE); // 退出窗口则结束进程
         this.setUndecorated(true); // 取消标题栏
 
-        ImageIcon imageIcon = new ImageIcon(MainWindowJFrame.backgourd);
+        ImageIcon imageIcon = new ImageIcon(ConstantDataSet.backgourd);
         Image image = imageIcon.getImage();
         JPanel jPanel = new JPanel(){
             @Override
@@ -55,13 +65,9 @@ public class MainWindow extends MainWindowJFrame {
         this.setVisible(true);
     }
 
-    public void bind(DatabaseManager databaseManager){
-        this.databaseManager = databaseManager;
-    }
-
     public void setToWelcomeView(){
         for (int i = 0; i < mainButtonSet.length; i++){
-            mainButtonSet[i].setText(mainButtonHint[i]);
+            mainButtonSet[i].setText(ConstantDataSet.mainButtonHint[i]);
             mainButtonSet[i].setBounds((gameWidth-mainButtonWidth)/2,
                     gameHeight*4/7+i*(mainButtonHeight+mainButtonPadding),
                     mainButtonWidth,mainButtonHeight);
@@ -70,13 +76,14 @@ public class MainWindow extends MainWindowJFrame {
 
     public void setToSingleGameView(String playerName){
         playBoard.init();
-        statusPanel.init(playerName);
+        GameState.startNewGame();
+        statusPanel.init(playerName, ConstantDataSet.defaultOppoName);
         setGameInterface();
     }
 
     public void loadSingleGameView(){
         playBoard.load();
-        statusPanel.init("未完成的游戏");
+        statusPanel.init("未完成的游戏", ConstantDataSet.defaultOppoName);
         setGameInterface();
     }
 
@@ -84,7 +91,8 @@ public class MainWindow extends MainWindowJFrame {
         playBoard.setVisible(false);
         statusPanel.setVisible(false);
         gameProcess.setVisible(false);
-        String[] hints = (type.equals("single")) ? singleGameButtonHint : multiGameButtonHint;
+        String[] hints = (type.equals("single")) ? ConstantDataSet.singleGameButtonHint :
+                ConstantDataSet.multiGameButtonHint;
         for (int i = 0; i < mainButtonSet.length; i++) {
             mainButtonSet[i].setVisible(true);
             mainButtonSet[i].setText(hints[i]);
@@ -95,7 +103,7 @@ public class MainWindow extends MainWindowJFrame {
     }
 
     public void showRules(){
-        JLabel jLabel = new JLabel(gameRule);
+        JLabel jLabel = new JLabel(ConstantDataSet.gameRule);
         JOptionPane.showMessageDialog(null,jLabel,"游戏帮助",JOptionPane.PLAIN_MESSAGE);
     }
 
@@ -112,7 +120,7 @@ public class MainWindow extends MainWindowJFrame {
         ButtonActionController buttonActionController = new ButtonActionController(this);
         for (int i = 0; i < mainButtonSet.length; i++){
             mainButtonSet[i] = new JButton();
-            mainButtonSet[i].setText(mainButtonHint[i]);
+            mainButtonSet[i].setText(ConstantDataSet.mainButtonHint[i]);
             mainButtonSet[i].addActionListener(buttonActionController);
             mainButtonSet[i].setBounds((gameWidth-mainButtonWidth)/2,
                     gameHeight*4/7+i*(mainButtonHeight+mainButtonPadding),
@@ -148,10 +156,10 @@ public class MainWindow extends MainWindowJFrame {
         gameProcess.init();
         mainButtonSet[0].setVisible(false);
         mainButtonSet[1].setVisible(false);
-        mainButtonSet[2].setText(MainWindowJFrame.undo);
+        mainButtonSet[2].setText(ConstantDataSet.undo);
         mainButtonSet[2].setBounds((gameWidth-mainButtonWidth)/2-mainButtonWidth-mainButtonPadding,
                 gameHeight*4/7+(mainButtonSet.length-1)*(mainButtonHeight+mainButtonPadding),
                 mainButtonWidth,mainButtonHeight);
-        mainButtonSet[3].setText(MainWindowJFrame.endGame);
+        mainButtonSet[3].setText(ConstantDataSet.endGame);
     }
 }
