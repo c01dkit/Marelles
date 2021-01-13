@@ -1,6 +1,8 @@
 package view;
 
+import controller.NetworkController;
 import controller.PlayBoardController;
+import model.GameState;
 import model.RecordData;
 import model.StepState;
 
@@ -13,16 +15,18 @@ public class PlayBoard extends JPanel {
     private final Image image;
     private final int edge;
     private Chess[] chessSet = null;
-    private final  PlayBoardController playBoardController;
+    private final PlayBoardController playBoardController;
+    private final NetworkController networkController;
 
     public PlayBoard(int x, int y,int edge){
-        System.out.println(this);
         this.setLayout(null);
         this.setBounds(x,y,edge,edge);
         this.edge = edge;
         this.block = edge/8;
         this.playBoardController = new PlayBoardController(this);
+        this.networkController = new NetworkController(this);
         this.addMouseListener(playBoardController);
+
         ImageIcon imageIcon = new ImageIcon(ConstantDataSet.board);
         image = imageIcon.getImage();
     }
@@ -34,69 +38,52 @@ public class PlayBoard extends JPanel {
         this.repaint();
     }
 
-    public void init(){
+
+    public void init(int gameMode){
         this.setVisible(true);
-        Chess.loadChessIcon();
-        playBoardController.init();
-        if (this.chessSet != null){
-            for (int i = 0 ; i < 24; i++){
-                this.remove(this.chessSet[i]);
-            }
-        }
-        this.chessSet = new Chess[24];
-        for (int i = 0; i < 24; i++){
-            this.chessSet[i] = new Chess(Chess.NONE);
-            int x = ConstantDataSet.chessPostionMap[i][0]*block-block/2;
-            int y = ConstantDataSet.chessPostionMap[i][1]*block-block/2;
-            this.chessSet[i].setBounds(x,y,100,100);
-            this.add(chessSet[i]);
-        }
+        playBoardController.init(gameMode);
+        resetChessSet();
     }
 
 
-    public void load(){
+    public void load(int gameID){
         this.setVisible(true);
-        Chess.loadChessIcon();
-        this.chessSet = new Chess[24];
-        for (int i = 0; i < chessSet.length; i++){
-            this.chessSet[i] = new Chess(Chess.NONE);
-        }
-        Vector<RecordData> vector = playBoardController.getRecords();
-        if (vector.size() >= 2* ConstantDataSet.CRITICAL_PHASE1)
-            playBoardController.updatePhase(StepState.PHASE2);
-        else playBoardController.updatePhase(StepState.PHASE1);
-        for (RecordData recordData: vector){
-            if (recordData.pos_before == recordData.pos_after
-                    && recordData.pos_after == recordData.pos_affect){ // phase1
-                if (recordData.player.equals("b")) chessSet[recordData.pos_after].setColor(Chess.BLACK);
-                else if (recordData.player.equals("w")) chessSet[recordData.pos_after].setColor(Chess.WHITE);
-            } else if (recordData.pos_before == recordData.pos_after){
-                chessSet[recordData.pos_before].setColor(Chess.NONE);
-                chessSet[recordData.pos_affect].setColor(Chess.NONE);
-                if (recordData.player.equals("b")) chessSet[recordData.pos_after].setColor(Chess.BLACK);
-                else if (recordData.player.equals("w")) chessSet[recordData.pos_after].setColor(Chess.WHITE);
-            } else if (recordData.pos_after == recordData.pos_affect) {
-                chessSet[recordData.pos_before].setColor(Chess.NONE);
-                if (recordData.player.equals("b")) chessSet[recordData.pos_after].setColor(Chess.BLACK);
-                else if (recordData.player.equals("w")) chessSet[recordData.pos_after].setColor(Chess.WHITE);
-            } else {
-                chessSet[recordData.pos_before].setColor(Chess.NONE);
-                chessSet[recordData.pos_affect].setColor(Chess.NONE);
-                if (recordData.player.equals("b")) chessSet[recordData.pos_after].setColor(Chess.BLACK);
-                else if (recordData.player.equals("w")) chessSet[recordData.pos_after].setColor(Chess.WHITE);
-            }
-        }
+        resetChessSet();
+        rebuildBoard(gameID);
     }
+
 
     public void undo(){
-
+        playBoardController.undo();
+        resetChessSet();
+        rebuildBoard(playBoardController.getCurrentGameID());
     }
+
+    public void oppoUndo(){
+        playBoardController.oppoUndo();
+        resetChessSet();
+        rebuildBoard(playBoardController.getCurrentGameID());
+        GameProcess.sendGameInfo("对方悔棋了！");
+    }
+
+    public int getGameResult(){
+        return playBoardController.getGameResult();
+    }
+
     public void saveGame(){
         playBoardController.save();
         if (chessSet != null){
             for (int i = 0; i < 24; i++)
                 this.remove(chessSet[i]);
         }
+    }
+
+    public void parseOppoStep(String info){
+        playBoardController.analyseOppoInfo(info);
+    }
+
+    public void oppoRunaway(){
+        playBoardController.oppoRunaway();
     }
 
     public int jumpChess(int from, int to){
@@ -171,12 +158,83 @@ public class PlayBoard extends JPanel {
         else if (color == Chess.WHITE) chessSet[index].setColor(Chess.WHITE_SELECTED);
     }
 
-    public void updateState(){
-
-    }
-
     public int checkChessColor(int index){
         if (index < 0 || index > chessSet.length) return ConstantDataSet.ERROR_BEYOND_BOARD;
         return chessSet[index].getColor();
+    }
+
+    private void rebuildBoard(int gameID){
+        // 重建棋盘
+        playBoardController.reload(gameID);
+        Vector<RecordData> vector = playBoardController.getRecords();
+        for (RecordData recordData: vector){
+            if (recordData.pos_before == recordData.pos_after
+                    && recordData.pos_after == recordData.pos_affect){ // 简单放置
+                if (recordData.player.equals("b")) {
+                    chessSet[recordData.pos_after].setColor(Chess.BLACK);
+                    playBoardController.situation[recordData.pos_after] = Chess.BLACK;
+                    playBoardController.checkThree(Chess.BLACK);
+                }
+                else if (recordData.player.equals("w")) {
+                    chessSet[recordData.pos_after].setColor(Chess.WHITE);
+                    playBoardController.situation[recordData.pos_after] = Chess.WHITE;
+                    playBoardController.checkThree(Chess.WHITE);
+                }
+            } else if (recordData.pos_before == recordData.pos_after){  // 放置后三连
+                chessSet[recordData.pos_before].setColor(Chess.NONE);
+                chessSet[recordData.pos_affect].setColor(Chess.NONE);
+                playBoardController.situation[recordData.pos_before] = Chess.NONE;
+                playBoardController.situation[recordData.pos_affect] = Chess.NONE;
+                if (recordData.player.equals("b")) {
+                    chessSet[recordData.pos_after].setColor(Chess.BLACK);
+                    playBoardController.checkThree(Chess.BLACK);
+                }
+                else if (recordData.player.equals("w")) {
+                    chessSet[recordData.pos_after].setColor(Chess.WHITE);
+                    playBoardController.checkThree(Chess.WHITE);
+                }
+            } else if (recordData.pos_after == recordData.pos_affect) { // 简单移动
+                chessSet[recordData.pos_before].setColor(Chess.NONE);
+                playBoardController.situation[recordData.pos_before] = Chess.NONE;
+                if (recordData.player.equals("b")) {
+                    chessSet[recordData.pos_after].setColor(Chess.BLACK);
+                    playBoardController.checkThree(Chess.BLACK);
+                }
+                else if (recordData.player.equals("w")) {
+                    chessSet[recordData.pos_after].setColor(Chess.WHITE);
+                    playBoardController.checkThree(Chess.WHITE);
+                }
+            } else { // 移动后三连
+                chessSet[recordData.pos_before].setColor(Chess.NONE);
+                chessSet[recordData.pos_affect].setColor(Chess.NONE);
+                playBoardController.situation[recordData.pos_before] = Chess.NONE;
+                playBoardController.situation[recordData.pos_affect] = Chess.NONE;
+                if (recordData.player.equals("b")) {
+                    chessSet[recordData.pos_after].setColor(Chess.BLACK);
+                    playBoardController.checkThree(Chess.BLACK);
+                }
+                else if (recordData.player.equals("w")) {
+                    chessSet[recordData.pos_after].setColor(Chess.WHITE);
+                    playBoardController.checkThree(Chess.WHITE);
+                }
+            }
+        }
+    }
+
+    private void resetChessSet(){
+        Chess.loadChessIcon();
+        if (this.chessSet != null){
+            for (int i = 0 ; i < 24; i++){
+                this.remove(this.chessSet[i]);
+            }
+        }
+        this.chessSet = new Chess[24];
+        for (int i = 0; i < 24; i++){
+            this.chessSet[i] = new Chess(Chess.NONE);
+            int x = ConstantDataSet.chessPostionMap[i][0]*block-block/2;
+            int y = ConstantDataSet.chessPostionMap[i][1]*block-block/2;
+            this.chessSet[i].setBounds(x,y,100,100);
+            this.add(chessSet[i]);
+        }
     }
 }

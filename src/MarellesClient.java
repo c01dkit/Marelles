@@ -1,5 +1,7 @@
+import controller.NetworkController;
 import model.DatabaseManager;
 import view.MainWindow;
+
 
 public class MarellesClient {
     public static void main(String[] args) {

@@ -4,13 +4,13 @@
 
 
 
-# Marelles_期末大程报告
+# Marelles_直棋对战游戏
 
 
 
 ### 背景描述
 
-MarellesClient，中文名九子棋、直棋，是一款双人对战的益智棋盘类游戏，最早可追溯至罗马帝国时期。因其棋盘、棋子布置简单、可玩性高，是一款比较流行的游戏。本次期末大程以这款游戏为核心元素，结合socket、GUI、数据库等知识，实现了双人在线对战游戏。
+Marelles，中文名九子棋、直棋，是一款双人对战的益智棋盘类游戏，最早可追溯至罗马帝国时期。因其棋盘、棋子布置简单、可玩性高，是一款比较流行的游戏。本次期末大程以这款游戏为核心元素，结合socket、GUI、数据库等知识，实现了双人在线对战游戏。
 
 ### 游戏规则
 
@@ -26,23 +26,68 @@ MarellesClient，中文名九子棋、直棋，是一款双人对战的益智棋
 2. 棋子移动阶段：玩家交替进行棋子移动。棋子移动时只能将自己一方的一枚棋子移动到相邻的空闲的格点处。如果移动棋子使得自己一方形成了一个“三连”，则该玩家需要立即选择对方玩家任意一枚棋子移出游戏。当某方玩家只剩三枚棋子时，进入第三阶段。
 3. 棋子跳跃阶段：当某方玩家只剩三枚棋子时，他可以不受“每次移动只能选择相邻空闲位置”的限制，而可以将自己的任意一枚棋子移动到任意空闲格点。当某方玩家只剩两枚棋子时，该玩家失败。
 
-### 实验整体思路
+### 程序设计原理
+
+### 程序设计目的
+
+### 程序算法说明
+
+### 程序流程框图
+
+### 调用函数关系
+
+### 文件列表
+
+```
+─src
+   │  MarellesClient.java
+   │  MarellesServer.java
+   │
+   ├─controller
+   │      ButtonActionController.java
+   │      GameTimer.java
+   │      NetworkController.java
+   │      PlayBoardController.java
+   │
+   │
+   ├─model
+   │      DatabaseManager.java
+   │      GameState.java
+   │      PlayerInfo.java
+   │      RecordData.java
+   │      StepState.java
+   │
+   ├─res
+   │  └─drawable
+   │          background.png
+   │          blackchess.png
+   │          blackchess_fade.png
+   │          blackchess_selected.png
+   │          board.png
+   │          logo.png
+   │          pureBackground.png
+   │          whitechess.png
+   │          whitechess_fade.png
+   │          whitechess_selected.png
+   │
+   └─view
+           Chess.java
+           ConstantDataSet.java
+           GameProcess.java
+           MainWindow.java
+           PlayBoard.java
+           StatusPanel.java
+```
 
 
 
-### 设计要点、创新点
+### 设计模式
 
-* 
+### 难点、要点、得意点
 
-### 实验详细思路
+### 程序使用说明
 
-
-
-### 运行实例
-
-
-
-### 编译环境
+#### 编译环境
 
 * IDE
 
@@ -77,7 +122,38 @@ MarellesClient，中文名九子棋、直棋，是一款双人对战的益智棋
   基于x64的电脑
   ```
 
-  
+  #### 程序运行方法
+
+1. 导入数据库驱动
+
+![image-20210113091602065](README.assets/image-20210113091602065.png)
+
+2. 单人模式时直接新建游戏
+3. 双人模式时需要启动服务器，由房主创建游戏后另一玩家加入游戏以开始
+
+### 程序实例
+
+![image-20210113093753198](README.assets/image-20210113093753198.png)
+
+
+
+![image-20210113093838051](README.assets/image-20210113093838051.png)
+
+
+
+![image-20210113093818622](README.assets/image-20210113093818622.png)
+
+### 程序结果说明分析
+
+### 结论展望
+
+
+
+
+
+### 设计要点、创新点
+
+
 
 ### 主要文件及目录说明
 
@@ -86,9 +162,7 @@ MarellesClient，中文名九子棋、直棋，是一款双人对战的益智棋
 |-
 ```
 
-### 运行说明
 
-1. 导入数据库驱动
 
 ### 实验心得
 
@@ -101,3 +175,7 @@ GUI方面：
 Database方面：
 
 * 最初使用易于迁移的sqlite作为数据库，但由于其仅支持库级锁，粒度过大，且几乎不支持并发操作，因此最后决定使用mysql作为数据库。和sqlite相比，mysql支持细粒度锁、并发编程，且报错信息详细，更加健壮。
+
+Socket方面：
+
+* 

@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class StatusPanel extends JPanel {
+    private static boolean keepCount = false;
     private static JLabel timerLabel = null;
     private static JLabel playerLabel = null;
     private static JLabel oppoLabel = null;
@@ -20,7 +21,7 @@ public class StatusPanel extends JPanel {
         this.setVisible(true);
         // 设置倒计时显示
         if (timerLabel == null){
-            timerLabel = new JLabel("--",JLabel.CENTER);
+            timerLabel = new JLabel(String.valueOf(ConstantDataSet.TICKER_MAX),JLabel.CENTER);
             timerLabel.setForeground(Color.RED);
             timerLabel.setBounds(0,0,width/4,height);
             this.add(timerLabel);
@@ -49,18 +50,12 @@ public class StatusPanel extends JPanel {
         return "Wrong Color!";
     }
 
-    public static void sendGameInfo(String info){
-        updateGameInfo(info, 1);
+    public static void updateTime(String time){
+        timerLabel.setText(time);
     }
 
-    public static void sendGameInfo(String info, int level){
-        updateGameInfo(info, level);
+    public static void updateOppoName(String name){
+        oppoLabel.setText(name);
     }
 
-    private static void updateGameInfo(String info, int level){
-        oppoLabel.setText(info);
-        if (level == 0) oppoLabel.setBackground(Color.red);
-        if (level == 1) oppoLabel.setBackground(Color.black);
-        if (level == 2) oppoLabel.setBackground(Color.lightGray);
-    }
 }

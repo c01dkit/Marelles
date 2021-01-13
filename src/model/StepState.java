@@ -3,24 +3,55 @@ package model;
 import view.Chess;
 import view.ConstantDataSet;
 
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.Vector;
 
-public class StepState extends TableManager{
-    public static final int PHASE1 = 1;
-    public static final int PHASE2 = 2;
-    public static final int PHASE3 = 3;
-    public static final int PHASE4 = 4;
+public class StepState{
+    public static final int PHASE1 = 1; // 双方均可放置棋子
+    public static final int PHASE2 = 2; // 双方均只可移动棋子
+    public static final int PHASE3 = 3; // 对方可以跳跃而自己不可
+    public static final int PHASE4 = 4; // 自己可以跳跃而对方不可
+    public static final int PHASE5 = 5; // 双方均可跳跃
+    public static final int PHASE6 = 6; // 游戏结束
     private final String TAG = "StepStateTableManager: ";
-    private final String TABLE_NAME = "step_state";
     private int gameID;
     private int phase;
     private Vector<RecordData> recordDataVector;
     public StepState(){
-        connect();
         phase = PHASE1;
-        if (connection==null) System.out.println(TAG+"connect failed");
         recordDataVector = getNewRecordDataVector();
+    }
+    public StepState(int gameID){
+        phase = PHASE1;
+        this.gameID = gameID;
+        recordDataVector = getNewRecordDataVector();
+    }
+
+    public int getTurnNum(){
+        if (recordDataVector!=null)return recordDataVector.size();
+        else return 0;
+    }
+
+    public void undo(){
+        if (recordDataVector!=null){
+            if (recordDataVector.size()>0){
+                recordDataVector.remove(recordDataVector.size()-1);
+            }
+            if (recordDataVector.size()>0 &&
+                    recordDataVector.get(recordDataVector.size()-1).player.equals("b"))
+                recordDataVector.remove(recordDataVector.size()-1);
+        }
+    }
+
+    public void oppoUndo(){
+        if (recordDataVector!=null){
+            if (recordDataVector.size()>0){
+                recordDataVector.remove(recordDataVector.size()-1);
+            }
+            if (recordDataVector.size()>0 &&
+                    recordDataVector.get(recordDataVector.size()-1).player.equals("w"))
+                recordDataVector.remove(recordDataVector.size()-1);
+        }
     }
 
     public int getGameID() {
@@ -63,7 +94,8 @@ public class StepState extends TableManager{
 
     public void popStep(){
         int size = recordDataVector.size();
-        if (size > 0) recordDataVector.remove(size-1);
+        if (size > 0)
+            recordDataVector.remove(size - 1);
     }
     //TODO:TEST
     public void showStep(){
@@ -72,17 +104,16 @@ public class StepState extends TableManager{
         }
     }
     public void save(){
-        try{
-            String deleteOld = "delete from " + TABLE_NAME + " where game_id=" + gameID;
-            statement = connection.createStatement();
+        Connection connection = DatabaseManager.getConnection();
+        try(Statement statement = connection.createStatement()){
+            String deleteOld = "delete from step_state where game_id=" + gameID;
             statement.executeUpdate(deleteOld);
-            statement.close();
         }catch (SQLException e){
             e.printStackTrace();
         }
         try{
-            String addNew = "insert into "+ TABLE_NAME + " values (?,?,?,?,?,?)";
-            preparedStatement = connection.prepareStatement(addNew);
+            String addNew = "insert into step_state values (?,?,?,?,?,?)";
+            PreparedStatement preparedStatement = connection.prepareStatement(addNew);
             for (RecordData recordData: recordDataVector){
                 preparedStatement.setInt(1,recordData.game_id);
                 preparedStatement.setInt(2,recordData.turn);
@@ -98,15 +129,13 @@ public class StepState extends TableManager{
         }
     }
     private Vector<RecordData> getNewRecordDataVector(){
-        if (gameID == 0) {
-            recordDataVector = new Vector<>();
-            gameID = GameState.getNewGameID();
-        }
+        if (recordDataVector == null)recordDataVector = new Vector<>();
+        if (gameID == 0) gameID = GameState.getNewGameID();
         else {
-            String sql = "select * from "+TABLE_NAME+" where game_id="+gameID;
-            try{
-                statement = connection.createStatement();
-                resultSet = statement.executeQuery(sql);
+            Connection connection = DatabaseManager.getConnection();
+            String sql = "select * from step_state where game_id="+gameID;
+            try(Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(sql)){
                 while (resultSet.next()){
                     RecordData recordData = new RecordData(
                             resultSet.getInt(1), // game_id
@@ -117,8 +146,6 @@ public class StepState extends TableManager{
                             resultSet.getInt(6)); // pos_affect
                     recordDataVector.add(recordData);
                 }
-                resultSet.close();
-                statement.close();
             } catch (SQLException e){
                 e.printStackTrace();
             }
@@ -126,10 +153,5 @@ public class StepState extends TableManager{
         return recordDataVector;
     }
 
-    public Vector<RecordData> load(){
-        int gameID = GameState.getLastUnfinishedGameID();
-        bindGameID(gameID);
-        return getNewRecordDataVector();
-    }
 
 }

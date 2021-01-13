@@ -9,10 +9,8 @@ public class Chess extends JLabel {
     public static final int BLACK_SELECTED = 3;
     public static final int WHITE_SELECTED = 5;
     private static ImageIcon blackChess;
-    private static ImageIcon blackChessShadow;
     private static ImageIcon blackChessSelected;
     private static ImageIcon whiteChess;
-    private static ImageIcon whiteChessShadow;
     private static ImageIcon whiteChessSelected;
     private int color;
     public Chess(int color){
@@ -21,10 +19,8 @@ public class Chess extends JLabel {
     public static void loadChessIcon(){
         blackChess = new ImageIcon(ConstantDataSet.bchess);
         blackChessSelected = new ImageIcon(ConstantDataSet.bchessSelected);
-        blackChessShadow = new ImageIcon(ConstantDataSet.bchessShadow);
         whiteChess = new ImageIcon(ConstantDataSet.wchess);
         whiteChessSelected = new ImageIcon(ConstantDataSet.wchessSelected);
-        whiteChessShadow = new ImageIcon(ConstantDataSet.wchessShadow);
     }
 
     public int getColor() {

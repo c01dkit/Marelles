@@ -47,17 +47,18 @@ public class MainWindow extends JFrame {
                 this.repaint();
             }
         };
+        this.setIconImage(new ImageIcon(ConstantDataSet.logo).getImage());
         this.setContentPane(jPanel);
         this.setLayout(null);
 
         // 添加游戏主要的按钮，进行界面切换
         initButtons();
 
-        // 添加游戏所用棋盘
-        initPlayBoard();
-
         // 添加游戏状态面板，提供提示窗口
         initStatusPanel();
+
+        // 添加游戏所用棋盘
+        initPlayBoard();
 
         // 添加游戏详情窗口
         initGameProcess();
@@ -75,23 +76,44 @@ public class MainWindow extends JFrame {
     }
 
     public void setToSingleGameView(String playerName){
-        playBoard.init();
+        playBoard.init(ConstantDataSet.SINGLE_MODE);
         GameState.startNewGame();
         statusPanel.init(playerName, ConstantDataSet.defaultOppoName);
         setGameInterface();
     }
 
-    public void loadSingleGameView(){
-        playBoard.load();
-        statusPanel.init("未完成的游戏", ConstantDataSet.defaultOppoName);
+    public void setToMultiGameView(String playerName, int gameMode){
+        playBoard.init(gameMode);
+        GameState.startNewGame();
+        statusPanel.init(playerName, ConstantDataSet.waitOppoName);
         setGameInterface();
     }
 
-    public void setToGameWelcomeView(String type) {
+    public void setToMultiGameView(String playerName, String oppoName, int gameMode){
+        playBoard.init(gameMode);
+        GameState.startNewGame();
+        statusPanel.init(playerName, oppoName);
+        setGameInterface();
+    }
+
+    public void loadSingleGameView(){
+        String[] names = GameState.getLastUnfinishedPlayerIDs();
+        if (names == null) {
+            JOptionPane.showMessageDialog(null,
+                    new JLabel("没有未完成的游戏"),
+                    "提示",JOptionPane.PLAIN_MESSAGE);
+            return;
+        }
+        playBoard.load(GameState.getLastUnfinishedGameID());
+        statusPanel.init(names[0],names[1]);
+        setGameInterface();
+    }
+
+    public void setToGameWelcomeView(int gameType) {
         playBoard.setVisible(false);
         statusPanel.setVisible(false);
         gameProcess.setVisible(false);
-        String[] hints = (type.equals("single")) ? ConstantDataSet.singleGameButtonHint :
+        String[] hints = (gameType == ConstantDataSet.SINGLE_MODE) ? ConstantDataSet.singleGameButtonHint :
                 ConstantDataSet.multiGameButtonHint;
         for (int i = 0; i < mainButtonSet.length; i++) {
             mainButtonSet[i].setVisible(true);
@@ -113,6 +135,11 @@ public class MainWindow extends JFrame {
 
     public void undo(){
         playBoard.undo();
+        GameProcess.sendGameInfo(ConstantDataSet.undoSelf);
+    }
+
+    public int getGameResult(){
+        return playBoard.getGameResult();
     }
 
     private void initButtons(){
