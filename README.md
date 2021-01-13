@@ -10,7 +10,7 @@
 
 ### 背景描述
 
-Marelles，中文名九子棋、直棋，是一款双人对战的益智棋盘类游戏，最早可追溯至罗马帝国时期。因其棋盘、棋子布置简单、可玩性高，是一款比较流行的游戏。本次期末大程以这款游戏为核心元素，结合socket、GUI、数据库等知识，实现了双人在线对战游戏。
+Marelles，中文名九子棋、直棋，是一款双人对战的益智棋盘类游戏，最早可追溯至罗马帝国时期。因其棋盘、棋子布置简单、可玩性高，是一款比较流行的游戏。
 
 ### 游戏规则
 
@@ -28,13 +28,330 @@ Marelles，中文名九子棋、直棋，是一款双人对战的益智棋盘类
 
 ### 程序设计原理
 
+* 游戏界面设计：使用Java Swing组件进行GUI开发，游戏可以分为主页面、棋盘面板、状态面板、游戏进程面板等区域。当点击“玩家信息”、“游戏帮助”等按钮时，将会弹出提示窗口。
+* 游戏进程进行：使用stepState模型来保存每个玩家每一步的信息，当落子、吃子时将修改模型内容，当游戏结束时会将模型内容保存至数据库中。
+* 玩家信息管理：使用MySQL作为数据库管理玩家信息。当玩家进入棋盘所在页面时，需要输入昵称。如果昵称未被使用过则自动新建用户。
+* 多人游戏模式：使用socket作为双人对战的基础。多人对战时MarellesServer默认预留20个连接槽，当玩家请求创建房间时，游戏服务器为其分配一个Handler。当玩家请求连接时，游戏服务器也为其分配一个Handler并将其与目标游戏房间建立关联，以实现数据通信。
+
 ### 程序设计目的
+
+综合利用socket、GUI设计、数据库等所学知识，尝试使用设计模式，实现一款双人对战游戏。
 
 ### 程序算法说明
 
+#### 游戏行为控制
+
+##### 点击棋盘完成下棋
+
+首先为鼠标注册回调函数。此处进行判断，当点击位置处于允许落子格点周围的圆形区域时，这一点击行为才会判定成为有效点击，并激发trigger函数。
+
+```java
+    private void register(MouseEvent e, int eventCode){
+        int x = e.getX();
+        int y = e.getY();
+        boolean found = false;
+        for (int i = 1 ; i <= 7 && !found; i++){
+            if (Math.abs(i*edge-x) > edge) continue;
+            for (int j = 1; j <= 7 && !found; j++){
+                if (Math.abs(j*edge-y) > edge) continue;
+                if (((x-edge*i)*(x-edge*i)+(y-edge*j)*(y-edge*j)) < (edge*edge/4)){
+                    found = true;
+                    int validation = stepState.localClick(i,j);
+                    if (validation < ConstantDataSet.chessPostionMap.length)
+                        trigger(validation,eventCode);
+                }
+            }
+        }
+    }
+```
+
+trigger函数中首先判断当前是否允许落子，其次判断是否处于自己移除对方棋子的状态。最后根据游戏的不同阶段来判断应该执行何种操作。
+
+```java
+    private void trigger(int index, int action){
+        if (wait) {
+            GameProcess.sendGameInfo("请等待对方落子！");
+            return;
+        }
+        int resultCode;
+        if (remove && action == CLICK && stepState.getPhase()!= StepState.PHASE6){
+            resultCode = playBoard.removeChess(index);
+            if (resultCode == ConstantDataSet.ERROR_EMPTY_CHESS){
+                GameProcess.sendGameInfo("该位置没有棋子！");
+                return;
+            } else if (resultCode == ConstantDataSet.ERROR_SELF_CHESS){
+                GameProcess.sendGameInfo("不能移除自己的棋子！");
+                return;
+            } else if (resultCode == ConstantDataSet.STATE_REMOVE_OK){
+                GameProcess.sendGameInfo(new int[]{index},"已移除对方一枚棋子<1>");
+                situation[index] = Chess.NONE;
+                hasRemoveNum++;
+                affect = index;
+                stepState.popStep();
+                stepState.addStep(from,to,index,Chess.BLACK);
+                updateState();
+                return;
+            }
+        }
+        int phase = stepState.getPhase();
+
+        if (action == CLICK) {
+            if (phase == StepState.PHASE1) {
+                placeBlackChess(index);
+            } else if (phase == StepState.PHASE2 || phase == StepState.PHASE3) {
+                moveBlackChess(index);
+            } else if (phase == StepState.PHASE4 || phase == StepState.PHASE5) {
+                jumpBlackChess(index);
+            } else if (phase == StepState.PHASE6) {
+                gameOver(index);
+            }
+        }
+    }
+```
+
+##### 放置阶段
+
+当游戏处于放置阶段时，玩家可以在自己的回合内放置一枚棋子。
+
+```java
+    private void placeBlackChess(int index){
+        int resultCode = playBoard.placeChess(index, Chess.BLACK);
+        if (resultCode == ConstantDataSet.ERROR_OVERLAP){
+            playBoard.selectChess(index);
+        } else if (resultCode == ConstantDataSet.STATE_PLACE_OK){
+            situation[index] = Chess.BLACK;
+            from = index;
+            to = index;
+            GameProcess.sendGameInfo(new int[]{index},"你在<1>放置了一枚棋子");
+            stepState.addStep(index,index,index,Chess.BLACK);
+            updateState();
+        }
+    }
+```
+
+##### 移动阶段
+
+当游戏处于移动阶段时，玩家可以在自己的回合内将自己的一枚棋子移动到相邻的空格处
+
+```java
+    private void moveBlackChess(int index){
+        int resultCode = playBoard.checkChessColor(index);
+        if (resultCode == Chess.BLACK){
+            playBoard.selectChess(index);
+            from = index;
+        } else if (resultCode == Chess.BLACK_SELECTED) {
+            playBoard.selectChess(index);
+            from = -1;
+        } else if (resultCode == Chess.NONE){
+            if (from != -1){
+                int ans = playBoard.moveChess(from,index);
+                switch (ans){
+                    case ConstantDataSet.ERROR_OVERLAP:
+                        GameProcess.sendGameInfo("该位置已有棋子！");
+                        break;
+                    case ConstantDataSet.ERROR_EMPTY_CHESS:
+                        GameProcess.sendGameInfo("棋子已被移动！");
+                        break;
+                    case ConstantDataSet.ERROR_TOO_FAR:
+                        GameProcess.sendGameInfo("只能相邻移动！");
+                        break;
+                    case ConstantDataSet.STATE_UNKOWN:
+                        GameProcess.sendGameInfo("未知错误");
+                        break;
+                    case ConstantDataSet.STATE_MOVE_OK:
+                        situation[from] = Chess.NONE;
+                        situation[index] = Chess.BLACK;
+                        to = index;
+                        stepState.addStep(from,index,index,Chess.BLACK);
+                        GameProcess.sendGameInfo(new int[]{from,index},"你将棋子从<1>移动到<2>");
+                        updateState();
+                }
+            }
+        }
+    }
+```
+
+##### 跳跃阶段
+
+当游戏处于跳跃阶段时，玩家可以在自己的回合内将自己的棋子移动到任意一处空位。
+
+```java
+    private void jumpBlackChess(int index){
+        int resultCode = playBoard.checkChessColor(index);
+        if (resultCode == Chess.BLACK){
+            playBoard.selectChess(index);
+            from = index;
+        } else if (resultCode == Chess.BLACK_SELECTED) {
+            playBoard.selectChess(index);
+            from = -1;
+        } else if (resultCode == Chess.NONE){
+            if (from != -1){
+                int ans = playBoard.jumpChess(from,index);
+                switch (ans){
+                    case ConstantDataSet.ERROR_OVERLAP:
+                        GameProcess.sendGameInfo("该位置已有棋子！");
+                        break;
+                    case ConstantDataSet.ERROR_EMPTY_CHESS:
+                        GameProcess.sendGameInfo("棋子已被移动！");
+                        break;
+                    case ConstantDataSet.STATE_UNKOWN:
+                        GameProcess.sendGameInfo("未知错误");
+                        break;
+                    case ConstantDataSet.STATE_JUMP_OK:
+                        situation[from] = Chess.NONE;
+                        situation[index] = Chess.BLACK;
+                        to = index;
+                        stepState.addStep(from,index,index,Chess.BLACK);
+                        GameProcess.sendGameInfo(new int[]{from,index},"你将棋子从<1>跳跃到<2>");
+                        updateState();
+                }
+            }
+        }
+    }
+```
+
+##### 单人模式下AI的行为模式
+
+放置阶段，以阻止玩家三连为首要目标，以自己达成三连为次要目标，如果均不能满足则随机放置棋子。
+
+```java
+    private int AIPlaceChess(int selfColor, int oppoColor){
+        for(int i = 0; i < situation.length; i++){
+            int tempColor = situation[i];
+            if (tempColor == Chess.NONE) {
+                situation[i] = oppoColor;
+                if (AIcheckThree(oppoColor)){
+                    situation[i] = tempColor;
+                    return i;
+                }
+                situation[i] = tempColor;
+            }
+        }
+        for(int i = 0; i < situation.length; i++){
+            int tempColor = situation[i];
+            if (tempColor == Chess.NONE) {
+                situation[i] = selfColor;
+                if (AIcheckThree(selfColor)){
+                    situation[i] = tempColor;
+                    return i;
+                }
+                situation[i] = tempColor;
+            }
+        }
+        return getRandomPlace(Chess.NONE);
+    }
+```
+
+
+
+#### socket通信处理
+
+##### 对战连接
+
+使用`[options]`作为连接阶段的控制字符，当server检测到信息传递以`[`作为字符串开头时，将会把这一信息作为连接建立命令来处理。命令解释：
+
+`[host]` 表示玩家创建房间，其后跟玩家昵称（同时也作为房间名）
+
+`[guest]`表示玩家准备加入房间，其后跟玩家昵称（同时作为客体名称）
+
+`[find-host]`表示玩家申请加入房间，其后跟目标房间名称
+
+`[oppo-name]`表示玩家已经成功加入房间，其后跟玩家名称。这一信息将发送至房主并通知有玩家加入房间
+
+```java
+    public static int setUpConnections(String info, int from) throws IOException {
+        if (info.startsWith("[host]")) clientName[from] = info.substring(6);
+        else if (info.startsWith("[guest]")) clientName[from] = info.substring(7);
+        else if (info.startsWith("[find-host]")) {
+            String target = info.substring(11);
+            for (int i = 0; i < MAX_SIZE; i++){
+                if (handlers[i] == null) continue;
+                if (clientName[i] == null) continue;
+                if (clientName[i].equals(target) && aliveState[i]){
+                    System.out.println(clientName[from]+"已与"+clientName[i]+"建立连接");
+                    handlers[i].setOppoNumber(from);
+                    sendMessageTo(i,"[oppo-name]"+clientName[from]);
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private void handle(InputStream input, OutputStream output) throws IOException {
+        selfWriter = new BufferedWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8));
+        selfReader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8));
+        selfWriter.write("Successfully connected to server. Current ID is "+ selfNumber +"\n");
+        selfWriter.flush();
+        while (true){
+            String s = selfReader.readLine();
+            System.out.println(s);
+            if (s.startsWith("[")) {
+                oppoNumber = MarellesServer.setUpConnections(s, selfNumber);
+                MarellesServer.sendMessageTo(selfNumber,s);
+            } else {
+                MarellesServer.sendMessageTo(oppoNumber,s);
+            }
+        }
+    }
+```
+
+##### 落子通讯
+
+使用`wait|`和`nowait|`开头的控制格式进行游戏步骤的通讯，标准格式为`wait|from|to|affect` 或`nowait|from|to|affect`，用以通知对方玩家的行动，此后随之更新自己的棋盘信息。由于游戏特点“满足三连后移除对方棋子”，这一步骤是连续的，而时间是分开计算，所以需要先进行棋子移动，再进行棋子移除。以下是格式说明：
+
+* `wait`: 消息发送方移动后形成三连，消息接受方需要等待新的信息才能落子
+* `nowait`: 消息发送方移动后没有形成三连，消息接受方可以进行操作
+* `from|to|affect`：分别表示消息发送方所移动的棋子的初始位置、结束位置、产生的影响
+
+##### 悔棋与逃跑控制
+
+若游戏未结束而一方玩家点击悔棋或结束游戏时，将向另外一方发送悔棋或结束游戏的消息。这一控制消息以`control`开头。
+
+* 当悔棋时，发送`control|undo`，当另一方玩家收到悔棋消息时，双方棋盘均更新。
+* 当结束游戏（即逃跑）时，发送`control|runAway`，当另一方玩家收到逃跑消息时，将获胜。
+
 ### 程序流程框图
 
+#### 程序整体流程框图
+
+系统程序整体部分流程框图如下
+
+![image-20210113212933756](README.assets/image-20210113212933756.png)
+
+#### 单人游戏流程框图
+
+单人游戏时程序流程框图如下
+
+![image-20210113224615431](README.assets/image-20210113224615431.png)
+
+#### 多人游戏流程框图
+
+多人游戏和单人游戏相比增加了消息同步模块
+
+![image-20210113224827780](README.assets/image-20210113224827780.png)
+
 ### 调用函数关系
+
+#### 鼠标监听
+
+游戏主要通过鼠标点击进行。鼠标点击函数调用图如下
+
+![image-20210113225309040](README.assets/image-20210113225309040.png)
+
+#### 程序整体函数调用关系
+
+从图中大致可以看出，各模块间函数具有一定的独立性
+
+![image-20210113225425399](README.assets/image-20210113225425399.png)
+
+#### 客户端主程序函数调用关系
+
+![image-20210113230115531](README.assets/image-20210113230115531.png)
+
+#### 游戏界面绘制函数调用关系
+
+![image-20210113230236904](README.assets/image-20210113230236904.png)
 
 ### 文件列表
 
@@ -78,8 +395,6 @@ Marelles，中文名九子棋、直棋，是一款双人对战的益智棋盘类
            PlayBoard.java
            StatusPanel.java
 ```
-
-
 
 ### 设计模式
 
@@ -128,8 +443,13 @@ Marelles，中文名九子棋、直棋，是一款双人对战的益智棋盘类
 
 ![image-20210113091602065](README.assets/image-20210113091602065.png)
 
-2. 单人模式时直接新建游戏
-3. 双人模式时需要启动服务器，由房主创建游戏后另一玩家加入游戏以开始
+2. 开始游戏前需要启动MySQL服务
+
+![image-20210113172838511](README.assets/image-20210113172838511.png)
+
+3. 如果是第一次进行游戏，需要手动创建marelles数据库，使用命令为`create database marelles`
+4. 单人模式时直接新建游戏
+5. 双人模式时需要启动marellesServer，由房主创建游戏后另一玩家加入游戏以开始
 
 ### 程序实例
 
@@ -145,22 +465,11 @@ Marelles，中文名九子棋、直棋，是一款双人对战的益智棋盘类
 
 ### 程序结果说明分析
 
-### 结论展望
-
-
-
-
-
 ### 设计要点、创新点
 
 
 
-### 主要文件及目录说明
-
-```python
-./
-|-
-```
+### 结论展望
 
 
 

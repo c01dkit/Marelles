@@ -4,7 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class StatusPanel extends JPanel {
-    private static boolean keepCount = false;
+    private static final boolean keepCount = false;
     private static JLabel timerLabel = null;
     private static JLabel playerLabel = null;
     private static JLabel oppoLabel = null;

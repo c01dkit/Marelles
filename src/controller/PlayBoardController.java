@@ -705,9 +705,6 @@ public class PlayBoardController implements MouseListener {
                     case ConstantDataSet.STATE_UNKOWN:
                         GameProcess.sendGameInfo("未知错误");
                         break;
-                    case ConstantDataSet.ERROR_TOO_FAR:
-                        GameProcess.sendGameInfo("只能相邻移动！");
-                        break;
                     case ConstantDataSet.STATE_JUMP_OK:
                         situation[from] = Chess.NONE;
                         situation[index] = Chess.BLACK;
